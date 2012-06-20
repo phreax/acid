@@ -1,0 +1,20 @@
+{
+  "name": "acid",
+  "version": "0.1.0",
+  "description": "A rails flavored asset pipeline based on piler",
+
+  "dependencies": {
+    "coffee-script": "",
+    "underscore": "",
+    "piler": "",
+    "handlebars-precompiler": "git://github.com/phreax/node-handlebars-precompiler.git",
+    "watch": ""
+  },
+
+  "main": "./lib/index",
+
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/phreax/acid.git"
+  }
+}
