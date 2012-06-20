@@ -3,6 +3,7 @@ fs           = require 'fs',
 path         = require 'path',
 watch        = require 'watch',
 _            = require 'underscore',
+sys  = require 'sys'
 
 {buildRegex,loadAssets,loadTemplates,addDir} = require './load_assets'
 
@@ -12,20 +13,23 @@ cssHandler = piler.createCSSManager()
 class Acid
 
   applyOptions: (options) ->
-    try 
-      options.config ||= require './config'
-    catch err
-      console.warn 'Could not load configuration file!'
-
-    options.assetRoot ||= options.config.assets && options.config.assets.dir
-    options.assetRoot ||= 'public'
-
+    
     unless options.config
       throw 'No configuration found!'
+
+    try 
+      if _.isString options.config
+        options.config = require './config'
+    catch err
+      throw "Could not load configuration file: #{err}"
 
     unless options.config.assets
       throw 'No assets specified in config!'
 
+    options.assetRoot ||= options.config.assets && options.config.assets.dir
+    options.assetRoot ||= 'public'
+
+    console.log sys.inspect(options)
     _.map ['config','assetRoot','io'], (key) -> options[key]
 
   # this code is executed on the client
@@ -49,7 +53,7 @@ class Acid
       else
         console.err 'TypeError: Could not evaluate javascript'
 
-  execJS: (data) ->
+  execJS: (data) =>
       if @socket
         console.log 'Hotpush javascript to client'
         @socket.emit('update:js',data)
@@ -58,8 +62,9 @@ class Acid
 
   bind: (app,options)->
 
-    [@config,@assetRoot,@io] = applyOptions options
+    [@config,@assetRoot,@io] = @applyOptions options
     
+
     unless @io 
       @io = require 'socket.io'
       @io.listen(app)
@@ -70,22 +75,22 @@ class Acid
     cssHandler.bind(app)
 
     jsHandler.addUrl('/socket.io/socket.io.js')
-    jsHandler.addExec(clientUpdater)
+    jsHandler.addExec(@clientUpdater)
 
     if @config.assets.templates
-      loadTemplates @config.assetsRoot,@config.assets.templates,jsHandler
+      loadTemplates @assetRoot,@config.assets.templates,jsHandler,execJS
 
     if @config.assets.javascripts
       loadAssets( @config.assets.javascripts
                 , jsHandler
-                , @options.assetRoot + '/javascripts'
+                , @assetRoot + '/javascripts'
                 , ['js','coffee']
                 )
 
     if @config.assets.stylesheets
       loadAssets( @config.assets.javascripts
                 , jsHandler
-                , @options.assetRoot + '/stylesheets'
+                , @assetRoot + '/stylesheets'
                 , ['css','less']
                 )
 
