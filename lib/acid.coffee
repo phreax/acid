@@ -1,11 +1,8 @@
-piler        = require 'piler',
-fs           = require 'fs',
-path         = require 'path',
-watch        = require 'watch',
 _            = require 'underscore',
-sys  = require 'sys'
+piler        = require 'piler',
+loader       = require './load_assets'
 
-{buildRegex,loadAssets,loadTemplates,addDir} = require './load_assets'
+{buildRegex,loadAssets,loadTemplates,addDir} = loader()
 
 jsHandler = piler.createJSManager()
 cssHandler = piler.createCSSManager()
@@ -29,7 +26,6 @@ class Acid
     options.assetRoot ||= options.config.assets && options.config.assets.dir
     options.assetRoot ||= 'public'
 
-    console.log sys.inspect(options)
     _.map ['config','assetRoot','io'], (key) -> options[key]
 
   # this code is executed on the client
@@ -78,7 +74,7 @@ class Acid
     jsHandler.addExec(@clientUpdater)
 
     if @config.assets.templates
-      loadTemplates @assetRoot,@config.assets.templates,jsHandler,execJS
+      loadTemplates @assetRoot,@config.assets.templates,jsHandler,@execJS
 
     if @config.assets.javascripts
       loadAssets( @config.assets.javascripts

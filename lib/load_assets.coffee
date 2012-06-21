@@ -2,109 +2,113 @@ _    = require 'underscore'
 fs   = require 'fs'
 path = require 'path'
 watch= require 'watch'
-sys= require 'sys'
 
-buildRegex = (extensions) ->
-  extensions ||= []
-  return new RegExp('\.' + extensions.join('$|\.') + '$') 
+module.exports = (_fs=fs,_watch=watch) ->
 
-walkDir = (dir,filter,cb) ->
-  func = arguments.callee
-  files = fs.readdirSync(dir)
-      
-  wrapped = (file,dir) ->
+  Loader =
 
-    if cb.length == 1 && file  then cb(file)
-    else if cb.length >= 2  then cb(file,dir)
+    buildRegex: (extensions) ->
+      extensions ||= []
+      return new RegExp('\\.' + extensions.join('$|\\.') + '$') 
 
-  _.each files, (f) ->
-      
-    filePath = path.join(dir,f)
-    stats = fs.lstatSync(filePath)
-    cond = true
+    walkDir: (dir,filter,cb) ->
+      func = arguments.callee
+      files = _fs.readdirSync(dir)
+          
+      wrapped = (file,dir) ->
 
-    if filter && _.isFunction(filter) then cond = filter(f)
-    if filter && _.isRegExp(filter) then cond = filter.test(f)
-    if cond && stats.isFile() then wrapped(filePath,null)
+        if cb.length == 1 && file  then cb(file)
+        else cb(file,dir)
 
-    if stats.isDirectory()
-      wrapped(null,filePath)
-      func(filePath,filter,cb)
+      _.each files, (f) ->
+          
+        filePath = path.join(dir,f)
+        stats = _fs.lstatSync(filePath)
+        cond = true
 
-addDir =  (dir,handler,filter) =>
-  if _.isArray(filter) then filter = (buildRegex filter)
+        if filter && _.isFunction(filter) then cond = filter(f)
+        if filter && _.isRegExp(filter) then cond = filter.test(f)
+        if cond && stats.isFile() then wrapped(filePath,null)
 
-  walkDir dir, filter, (f) ->
+        if stats.isDirectory()
+          wrapped(null,filePath)
+          func(filePath,filter,cb)
 
-    console.log "Add File: #{f}"
-    handler.addFile(f)
+    addDir: (dir,handler,filter) ->
+      if _.isArray(filter) then filter = (@buildRegex filter)
 
-loadAssets = (assets,handler,assetDir,extensions) =>
+      @walkDir dir, filter, (f) ->
 
-  unless assets then return
-  assets = [assets] unless (_.isArray assets)
+        console.log "Add File: #{f}"
+        handler.addFile(f)
 
-  fileRegex = buildRegex(extensions)
+    loadAssets: (assets,handler,assetDir,extensions) ->
 
-  _.each assets, (asset) =>
-    if(f = asset.require) 
-      filePath = path.join(assetDir,f)
-      handler.addFile(filePath)
-      
-      console.log "Add File: #{filePath}"
+      unless assets then return
+      assets = [assets] unless (_.isArray assets)
 
-    if(dir = asset.require_tree) 
-      requirePath = path.join(assetDir,dir)
-      addDir(requirePath,handler,fileRegex)
+      fileRegex = @buildRegex(extensions)
 
-loadTemplates = (assetRoot,templates,handler,execJS) ->
+      _.each assets, (asset) =>
+        if(f = asset.require) 
+          filePath = path.join(assetDir,f)
+          handler.addFile(filePath)
+          
+          console.log "Add File: #{filePath}"
 
-  console.log 'Compile templates'
-  console.log assetRoot
-  engine = templates.engine
-  lib = templates.lib
-  templateDir = path.join(assetRoot,templates.dir || 'templates')
-  console.log templateDir 
+        if(dir = asset.require_tree) 
+          requirePath = path.join(assetDir,dir)
+          @addDir(requirePath,handler,fileRegex)
 
-  loadAssets( lib
-            , handler
-            , assetRoot + '/javascripts'
-            )
+    loadTemplates: (assetRoot,templates,handler,execJS) ->
 
-  if engine == 'handlebars'
+      console.log 'Compile templates'
+      console.log assetRoot
+      engine = templates.engine
+      lib = templates.lib
+      templateDir = path.join(assetRoot,templates.dir || 'templates')
+      console.log templateDir 
 
-    hbsPrecompiler = require 'handlebars-precompiler'
-    hbsRegex = buildRegex(['hbs','handlebars']) 
-    
-    compile = (file) ->
-     return hbsPrecompiler.do
-       templates: [file],
-       fileRegex: hbsRegex,
-       min: false 
+      @loadAssets( lib
+                , handler
+                , assetRoot + '/javascripts'
+                )
 
-    handler.addRaw(compile(templateDir))
+      if engine == 'handlebars'
 
-    if templates.watch
+        hbsPrecompiler = require 'handlebars-precompiler'
+        hbsRegex = @buildRegex(['hbs','handlebars']) 
+        
+        compile = (file) ->
+         return hbsPrecompiler.do
+           templates: [file],
+           fileRegex: hbsRegex,
+           min: false 
 
-      updateTemplate = (file) ->
-        try
-          source = compile(file)
-          execJS(source)
-        catch err
-          console.warn 'Failed to compile template ' + file
-          console.warn err
+        handler.addRaw(compile(templateDir))
 
-      watch.createMonitor templateDir, (monitor) ->
-        console.log '[start watching] ' +templateDir
-        monitor.on 'changed', (f,curr,prev) ->
-          if hbsRegex.test(f)
-            console.log "[changed file] #{f}"
-            updateTemplate(f)
-        monitor.on 'created', (f,curr,prev) ->
-          if hbsRegex.test(f) 
-            console.log "[created file] #{f}"
-            updateTemplate(f)
-  else 
-    console.warn "Template engine #{engine} not supported!"
+        if templates.watch
 
-module.exports= {buildRegex,loadAssets,loadTemplates,addDir}
+          updateTemplate = (file) ->
+            try
+              source = compile(file)
+              execJS(source)
+            catch err
+              console.warn 'Failed to compile template ' + file
+              console.warn err
+
+          _watch.createMonitor templateDir, (monitor) ->
+            console.log '[start watching] ' +templateDir
+            monitor.on 'changed', (f,curr,prev) ->
+              if hbsRegex.test(f)
+                console.log "[changed file] #{f}"
+                updateTemplate(f)
+            monitor.on 'created', (f,curr,prev) ->
+              if hbsRegex.test(f) 
+                console.log "[created file] #{f}"
+                updateTemplate(f)
+      else 
+        console.warn "Template engine #{engine} not supported!"
+
+     # return bound object    
+  _.bindAll Loader
