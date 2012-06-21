@@ -1,15 +1,16 @@
-_ = require 'underscore'
-sinon = require 'sinon'
+_         = require 'underscore'
+sinon     = require 'sinon'
 sinonChai = require 'sinon-chai'
-chai = require 'chai'
+chai      = require 'chai'
 chai.use sinonChai
-assert = chai.assert
-{FakeFS} = require './spec_helper'
-loader = require '../lib/load_assets'
+{FakeFS}  = require './spec_helper'
+utils     = require '../lib/utils'
+
+
 do chai.should
 
 describe 'buildRegex', ->
-  {buildRegex} = loader()
+  {buildRegex} = utils()
   it 'should return a file regex', ->
     regex = buildRegex ['js','coffee']
     regex.toString().should.equal /\.js$|\.coffee$/.toString()
@@ -22,7 +23,7 @@ describe 'walkDir', ->
   ]
   spy = sinon.spy();
 
-  {walkDir} = loader(new FakeFS(tree))
+  {walkDir} = utils(new FakeFS(tree))
   walkDir '.',null,spy
 
   it 'should call cb for every file', ->
@@ -46,7 +47,7 @@ describe 'walkDir with filter', ->
   ]
   spy = sinon.spy();
 
-  {walkDir,buildRegex} = loader(new FakeFS(tree))
+  {walkDir,buildRegex} = utils(new FakeFS(tree))
   regex = buildRegex ['js']
   walkDir '.',regex,spy
 
@@ -62,6 +63,3 @@ describe 'walkDir with filter', ->
     spy.args[0].should.eql [null,'dir']
     spy.args[1].should.eql [null,'dir2']
 
-
-
-describe 'addDir'

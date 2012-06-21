@@ -1,93 +1,125 @@
-_            = require 'underscore',
-piler        = require 'piler',
-loader       = require './load_assets'
-
-{buildRegex,loadAssets,loadTemplates,addDir} = loader()
+_            = require 'underscore'
+path         = require 'path'
+piler        = require 'piler'
+utils        = require './utils'
+templateHandler    = require './template_handler'
+{loadTemplates} = templateHandler()
 
 jsHandler = piler.createJSManager()
 cssHandler = piler.createCSSManager()
 
-class Acid
+module.exports = (_utils=utils) ->
 
-  applyOptions: (options) ->
-    
-    unless options.config
-      throw 'No configuration found!'
+  {walkDir,buildRegex} =  _utils()
 
-    try 
-      if _.isString options.config
-        options.config = require './config'
-    catch err
-      throw "Could not load configuration file: #{err}"
+  Acid =  
 
-    unless options.config.assets
-      throw 'No assets specified in config!'
+    applyOptions: (options) ->
+      
+      unless options.config
+        throw 'No configuration found!'
 
-    options.assetRoot ||= options.config.assets && options.config.assets.dir
-    options.assetRoot ||= 'public'
+      try 
+        if _.isString options.config
+          options.config = require './config'
+      catch err
+        throw "Could not load configuration file: #{err}"
 
-    _.map ['config','assetRoot','io'], (key) -> options[key]
+      unless options.config.assets
+        throw 'No assets specified in config!'
 
-  # this code is executed on the client
-  clientUpdater: ->
-    console.log 'Starting asset updater..'  
+      options.assetRoot ||= options.config.assets && options.config.assets.dir
+      options.assetRoot ||= 'public'
 
-    acid = io.connect '/acid'
+      _.map ['config','assetRoot','io'], (key) -> options[key]
 
-    acid.on 'connect', ->
-      console.log 'Updater has connected'
-    
-    acid.on 'disconnect', ->
-      console.log 'Updater has disconnected'
+    # delegate piler methods
+    addFile: (file) ->
+      
+    # this code is executed on the client
+    clientUpdater: ->
+      console.log 'Starting asset updater..'  
 
-    acid.on 'update:js', (data) ->
-      console.log 'Updating javascipts'
-      if toString.call(data) == '[object Function]'
-        data()
-      else if toString.call(data) == '[object String]'
-        eval(source)
-      else
-        console.err 'TypeError: Could not evaluate javascript'
+      acid = io.connect '/acid'
 
-  execJS: (data) =>
+      acid.on 'connect', ->
+        console.log 'Updater has connected'
+      
+      acid.on 'disconnect', ->
+        console.log 'Updater has disconnected'
+
+      acid.on 'update:js', (data) ->
+        console.log 'Updating javascipts'
+        if toString.call(data) == '[object Function]'
+          data()
+        else if toString.call(data) == '[object String]'
+          eval(source)
+        else
+          console.err 'TypeError: Could not evaluate javascript'
+
+    execJS: (data) =>
       if @socket
         console.log 'Hotpush javascript to client'
         @socket.emit('update:js',data)
       else
         console.log 'socket not yet initialized. call bind first'
 
-  bind: (app,options)->
+    addDir: (dir,handler,filter) ->
+      if _.isArray(filter) then filter = (buildRegex filter)
 
-    [@config,@assetRoot,@io] = @applyOptions options
-    
+      walkDir dir, filter, (f) ->
 
-    unless @io 
-      @io = require 'socket.io'
-      @io.listen(app)
+        console.log "Add File: #{f}"
+        handler.addFile(f)
 
-    @socket = @io.of('/assets')
-    
-    jsHandler.bind(app)
-    cssHandler.bind(app)
+    loadAssets: (assets,handler,assetDir,extensions) ->
 
-    jsHandler.addUrl('/socket.io/socket.io.js')
-    jsHandler.addExec(@clientUpdater)
+      unless assets then return
+      assets = [assets] unless (_.isArray assets)
 
-    if @config.assets.templates
-      loadTemplates @assetRoot,@config.assets.templates,jsHandler,@execJS
+      fileRegex = buildRegex(extensions)
 
-    if @config.assets.javascripts
-      loadAssets( @config.assets.javascripts
-                , jsHandler
-                , @assetRoot + '/javascripts'
-                , ['js','coffee']
-                )
+      _.each assets, (asset) =>
+        if(f = asset.require) 
+          filePath = path.join(assetDir,f)
+          handler.addFile(filePath)
+          
+          console.log "Add File: #{filePath}"
 
-    if @config.assets.stylesheets
-      loadAssets( @config.assets.javascripts
-                , jsHandler
-                , @assetRoot + '/stylesheets'
-                , ['css','less']
-                )
+        if(dir = asset.require_tree) 
+          requirePath = path.join(assetDir,dir)
+          @addDir(requirePath,handler,fileRegex)
 
-module.exports = new Acid()
+
+    bind: (app,options)->
+
+      [@config,@assetRoot,@io] = @applyOptions options
+      
+      unless @io 
+        @io = require 'socket.io'
+        @io.listen(app)
+
+      @socket = @io.of('/assets')
+      
+      jsHandler.bind(app)
+      cssHandler.bind(app)
+
+      jsHandler.addUrl('/socket.io/socket.io.js')
+      jsHandler.addExec(@clientUpdater)
+
+      if @config.assets.templates
+        loadTemplates @assetRoot,@config.assets.templates,jsHandler,@execJS
+
+      if @config.assets.javascripts
+        @loadAssets( @config.assets.javascripts
+                  , jsHandler
+                  , @assetRoot + '/javascripts'
+                  , ['js','coffee']
+                  )
+
+      if @config.assets.stylesheets
+        @loadAssets( @config.assets.javascripts
+                  , jsHandler
+                  , @assetRoot + '/stylesheets'
+                  , ['css','less']
+                  )
