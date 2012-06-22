@@ -120,7 +120,7 @@ handlebars, coffee-script, less
 
 * express
 * [piler](https://github.com/epeli/piler)
-* [handlebars-precompiler](https://github.com/phreax/handlebars-precompiler)
+* [handlebars-precompiler](https://github.com/phreax/node-handlebars-precompiler)
 * socket.io 
 
 ## Development
