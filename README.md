@@ -11,14 +11,15 @@ It was developed for the use with express, backbone.js and handlebars.
 Installation
 ------------
 
-  npm install https://github.com/phreax/acid.git 
+    npm install https://github.com/phreax/acid.git 
 
 Usage
 -----
 
 First create a configuration file to define all your assets:
 
-config.coffee
+config.coffee:
+
 ```coffee
 module.exports = 
   assets:
@@ -63,15 +64,15 @@ Acid assumes that you have your asset directory structured like this, if not spe
 
 Require acid:
 
-  acid = require 'acid'
+    acid = require 'acid'
 
 Load the configuration file:
 
-  config = require 'config'
+    config = require 'config'
 
 Bind it to your app:
 
-  acid.bind app, acid: config
+    acid.bind app, acid: config
 
 For hot code push and live templating you should
 also add io, otherwise it will be loaded by default.
@@ -85,7 +86,7 @@ the resources:
 
 index.jade:
 
-  !{renderScriptTags()}
+    !{renderScriptTags()}
 
 ### Live Templating 
 
@@ -94,7 +95,7 @@ a great clientside template engine based on `mustache.js`.
 But the real kick is, that it will also watch your template directory for changes, and push the code directly
 to the browser, so it will be instantly viewed. Just bind a Backbone event to the Handlebars.set method:
 
-``javascript
+```javascript
   // set up observer on handlebar templates
   Handlebars.templates = Handlebars.templates || {};
   _.extend(Handlebars, Backbone.Events);
@@ -105,7 +106,7 @@ to the browser, so it will be instantly viewed. Just bind a Backbone event to th
     this.trigger('changed',name);
     this.trigger('changed:'+name);
   },Handlebars);
-``
+```
  
 No you can listen to changes of templates and rerender your view!
 
