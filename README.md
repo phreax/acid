@@ -1,4 +1,4 @@
-Acid:
+Acid
 ====
 
 Acid is rails flavored asset pipeline that makes your assets fly... Based on the excellent
@@ -90,8 +90,8 @@ index.jade:
 
 ### Live Templating 
 
-Acid will compile all clientside templates for you. Currently only `handlebars` is supported, which is
-a great clientside template engine based on `mustache.js`.
+Acid will compile all clientside templates for you. Currently only **Handlebars** is supported, which is
+a great clientside template engine based on **mustache.js**.
 But the real kick is, that it will also watch your template directory for changes, and push the code directly
 to the browser, so it will be instantly viewed. Just bind a Backbone event to the Handlebars.set method:
 
@@ -113,13 +113,13 @@ No you can listen to changes of templates and rerender your view!
 
 ### Supported compilers
 
-handlebars, coffees-script, less
+handlebars, coffee-script, less
 
 
 ## Depenencies
 
-* Express
-* piler
+* express
+* epeli/piler
 * handlebars-precompiler
 * socket.io 
 
