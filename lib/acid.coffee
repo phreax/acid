@@ -101,6 +101,8 @@ module.exports = (_utils=utils) ->
 
       @socket = @io.of('/assets')
       
+      _.bindAll @, ['execJS']
+
       jsHandler.bind(app)
       cssHandler.bind(app)
 

@@ -12,7 +12,7 @@ module.exports = (_watch=watch) ->
     COMPILERS:
    
       handlebars:
-        extension: ['hbs','handlebars']
+        extensions: ['hbs','handlebars']
         compile: (file) ->
           @hbsPrecompiler ||= require 'handlebars-precompiler'
           @hbsRegex ||= buildRegex @extensions
@@ -22,7 +22,7 @@ module.exports = (_watch=watch) ->
             fileRegex: @hbsRegex,
             min: false 
 
-    updateTemplate: (file,compiler) ->
+    updateTemplate: (file,compiler,execJS) ->
       try
         source = compiler.compile(file)
         execJS(source)
@@ -41,6 +41,7 @@ module.exports = (_watch=watch) ->
         
       if templates.lib
         libPath = path.join(assetRoot,'javascripts',templates.lib)
+        console.log 'Add Template Lib: ' + libPath
         handler.addFile libPath
       else
         console.warn 'No templating runtime library given?'
@@ -51,16 +52,18 @@ module.exports = (_watch=watch) ->
       if templates.watch
 
         hbsRegex = buildRegex compiler.extensions
+        console.log hbsRegex
         
-        _watch.createMonitor templateDir, (monitor) ->
+        _watch.createMonitor templateDir, (monitor) =>
           console.log '[start watching] ' +templateDir
-          monitor.on 'changed', (f,curr,prev) ->
+          monitor.on 'changed', (f,curr,prev) =>
+            console.log 'change ' + f
             if hbsRegex.test(f)
               console.log "[changed file] #{f}"
-              @updateTemplate(f)
-          monitor.on 'created', (f,curr,prev) ->
+              @updateTemplate(f,compiler,execJS)
+          monitor.on 'created', (f,curr,prev) =>
             if hbsRegex.test(f) 
               console.log "[created file] #{f}"
-              @updateTemplate(f)
+              @updateTemplate(f,compiler,execJS)
 
   _.bindAll TemplateHandler
