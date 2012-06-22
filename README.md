@@ -19,7 +19,7 @@ Usage
 First create a configuration file to define all your assets:
 
 config.coffee
-``coffee
+```coffee
 module.exports = 
   assets:
     dir: 'public'
@@ -46,7 +46,7 @@ module.exports =
       engine: 'handlebars'
       lib: 'vendor/handlebars.runtime.js'
       watch: true
-``
+```
 
 Keys:
 
