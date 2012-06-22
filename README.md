@@ -119,8 +119,8 @@ handlebars, coffee-script, less
 ## Depenencies
 
 * express
-* epeli/piler
-* handlebars-precompiler
+* [piler](https://github.com/epeli/piler)
+* [handlebars-precompiler](https://github.com/phreax/handlebars-precompiler)
 * socket.io 
 
 ## Development
