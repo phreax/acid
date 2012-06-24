@@ -106,7 +106,7 @@ Acid = class
 
   addModule: (module) -> 
     obj = require module
-    jsHandler.addOb obj;
+    jsHandler.addExec obj;
 
   loadAssets: (assets,handler,assetDir,extensions) ->
 
