@@ -13,6 +13,7 @@ Acid = class
 
   constructor: ->
 
+    console.log __dirname
     @EXTENSION =
       javascripts: ['js','coffee']
       stylesheets: ['css','less']
@@ -58,6 +59,15 @@ Acid = class
     options.assetRoot ||= 'public'
 
     _.map ['config','assetRoot','io'], (key) -> options[key]
+
+  lookupPath: (dir,file) ->
+    assetDirs = [path.join(@assetRoot,dir), @assetRoot, '']
+    for dir in assetDirs
+      p = path.join(dir,file)
+      if path.existsSync(p)
+        return p
+     
+    console.warn "File '#{file}' not found in paths!" 
 
   clientUpdater: ->
     console.log 'Starting asset updater..'  
@@ -107,13 +117,12 @@ Acid = class
 
     _.each assets, (asset) =>
       if(f = asset.require) 
-        filePath = path.join(assetDir,f)
+        filePath = @lookupPath(assetDir,f)
         handler.addFile(filePath)
-        
         console.log "Add File: #{filePath}"
 
       if(dir = asset.require_tree) 
-        requirePath = path.join(assetDir,dir)
+        requirePath = @lookupPath(assetDir,dir)
         @addDir(requirePath,handler,fileRegex)
       
       if(m = asset.require_module) 
@@ -125,6 +134,14 @@ Acid = class
   liveUpdate: ->
     jsHandler.liveUpdate cssHandler, @io
 
+  renderTags: (type) ->
+    unless type?
+      javascripts: jsHandler.renderTags()
+      stylesheets: cssHandler.renderTags()
+    else if type == 'js'
+      jsHandler.renderTags()
+    else if type == 'css'
+      cssHandler.renderTags()
   
   bind: (app,options)->
 
@@ -148,14 +165,14 @@ Acid = class
     if @config.assets.javascripts
       @loadAssets( @config.assets.javascripts
                 , jsHandler
-                , @assetRoot + '/javascripts'
+                , 'javascripts'
                 , ['js','coffee']
                 )
 
     if @config.assets.stylesheets
       @loadAssets( @config.assets.stylesheets
                 , jsHandler
-                , @assetRoot + '/stylesheets'
+                , 'stylesheets'
                 , ['css','less']
                 )
 
