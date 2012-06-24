@@ -1,6 +1,6 @@
 {
   "name": "acid",
-  "version": "0.2.4",
+  "version": "0.2.5",
   "description": "A rails flavored asset pipeline based on piler",
 
   "dependencies": {

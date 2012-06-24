@@ -138,10 +138,10 @@ Acid = class
     unless type?
       javascripts: jsHandler.renderTags()
       stylesheets: cssHandler.renderTags()
-    else if type == 'js'
-      jsHandler.renderTags()
-    else if type == 'css'
+    else if type in ['css','stylesheets']
       cssHandler.renderTags()
+    else if type in ['js','javascripts']
+      jsHandler.renderTags()
   
   bind: (app,options)->
 
@@ -171,7 +171,7 @@ Acid = class
 
     if @config.assets.stylesheets
       @loadAssets( @config.assets.stylesheets
-                , jsHandler
+                , cssHandler
                 , 'stylesheets'
                 , ['css','less']
                 )
