@@ -11,29 +11,53 @@ cssHandler = piler.createCSSManager()
 
 Acid = class
 
+  constructor: ->
+
+    @EXTENSION =
+      javascripts: buildRegex ['js','coffee']
+      stylesheets: buildRegex ['css','less']
+
+
+     # delegate piler methods
+    _.each ['addOb','addExec'], ((fn) ->
+      this[fn] = _.bind jsHandler[fn], jsHandler
+    ), this
+
+    _.each ['addFile', 'addRaw','addUrl', 'addRaw'], ((fn) ->
+      this[fn] = (ns_or_file,file) ->
+        unless file
+          file = ns_or_file
+      
+        if @EXTENSION.javascripts.test(file)
+          jsHandler[fn] ns_or_file,file
+        else if @EXTENSION.stylesheets.test(file)
+          cssHandler[fn] ns_or_file,file
+        else
+          console.warn "Filetype does not match '#{file}'"
+    ), this
+    
+    _.bindAll this, ['execJS']
+
   applyOptions: (options) ->
     
     unless options.config
-      throw 'No configuration found!'
+      console.warn 'No configuration found!'
+      options.config = {}
 
     try 
       if _.isString options.config
-        options.config = require './config'
+        options.config = require options.config
     catch err
       throw "Could not load configuration file: #{err}"
 
     unless options.config.assets
-      throw 'No assets specified in config!'
+      console.warn 'No assets specified in config!'
 
     options.assetRoot ||= options.config.assets && options.config.assets.dir
     options.assetRoot ||= 'public'
 
     _.map ['config','assetRoot','io'], (key) -> options[key]
 
-  # delegate piler methods
-  addFile: (file) ->
-    
-  # this code is executed on the client
   clientUpdater: ->
     console.log 'Starting asset updater..'  
 
@@ -54,7 +78,7 @@ Acid = class
       else
         console.err 'TypeError: Could not evaluate javascript'
 
-  execJS: (data) =>
+  execJS: (data) ->
     if @socket
       console.log 'Hotpush javascript to client'
       @socket.emit('update:js',data)
@@ -87,7 +111,10 @@ Acid = class
         requirePath = path.join(assetDir,dir)
         @addDir(requirePath,handler,fileRegex)
 
+  liveUpdate: ->
+    jsHandler.liveUpdate cssHandler, @io
 
+  
   bind: (app,options)->
 
     [@config,@assetRoot,@io] = @applyOptions options
@@ -97,9 +124,9 @@ Acid = class
       @io.listen(app)
 
     @socket = @io.of('/assets')
+     
     
-    _.bindAll @, ['execJS']
-
+    
     jsHandler.bind(app)
     cssHandler.bind(app)
 

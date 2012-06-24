@@ -57,7 +57,6 @@ module.exports = (_watch=watch) ->
         _watch.createMonitor templateDir, (monitor) =>
           console.log '[start watching] ' +templateDir
           monitor.on 'changed', (f,curr,prev) =>
-            console.log 'change ' + f
             if hbsRegex.test(f)
               console.log "[changed file] #{f}"
               @updateTemplate(f,compiler,execJS)
