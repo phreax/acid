@@ -11,7 +11,7 @@ It was developed for the use with express, backbone.js and handlebars.
 Installation
 ------------
 
-    npm install https://github.com/phreax/acid.git 
+    npm install acid 
 
 Usage
 -----

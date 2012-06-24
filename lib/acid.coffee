@@ -94,6 +94,10 @@ Acid = class
       console.log "Add File: #{f}"
       handler.addFile(f)
 
+  addModule: (module) -> 
+    obj = require module
+    jsHandler.addOb obj;
+
   loadAssets: (assets,handler,assetDir,extensions) ->
 
     unless assets then return
@@ -111,6 +115,12 @@ Acid = class
       if(dir = asset.require_tree) 
         requirePath = path.join(assetDir,dir)
         @addDir(requirePath,handler,fileRegex)
+      
+      if(m = asset.require_module) 
+        if handler == jsHandler
+          @addModule m
+        else
+          console.warn 'No require_module for stylesheets!'
 
   liveUpdate: ->
     jsHandler.liveUpdate cssHandler, @io
