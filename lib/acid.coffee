@@ -14,23 +14,24 @@ Acid = class
   constructor: ->
 
     @EXTENSION =
-      javascripts: buildRegex ['js','coffee']
-      stylesheets: buildRegex ['css','less']
-
+      javascripts: ['js','coffee']
+      stylesheets: ['css','less']
 
      # delegate piler methods
     _.each ['addOb','addExec'], ((fn) ->
       this[fn] = _.bind jsHandler[fn], jsHandler
     ), this
 
-    _.each ['addFile', 'addRaw','addUrl', 'addRaw'], ((fn) ->
-      this[fn] = (ns_or_file,file) ->
+    _.each ['addFile', 'addRaw','addUrl'], ((fn) ->
+      this[fn] = (ns_or_file,file,extension) ->
         unless file
           file = ns_or_file
-      
-        if @EXTENSION.javascripts.test(file)
+
+        extension ||= path.extname(file)[1..]
+
+        if extension in @EXTENSION.javascripts
           jsHandler[fn] ns_or_file,file
-        else if @EXTENSION.stylesheets.test(file)
+        if extension in @EXTENSION.stylesheets
           cssHandler[fn] ns_or_file,file
         else
           console.warn "Filetype does not match '#{file}'"
@@ -124,8 +125,6 @@ Acid = class
       @io.listen(app)
 
     @socket = @io.of('/assets')
-     
-    
     
     jsHandler.bind(app)
     cssHandler.bind(app)

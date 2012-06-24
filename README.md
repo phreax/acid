@@ -86,6 +86,7 @@ the resources:
 
 index.jade:
 
+    !{renderStyleTags()}
     !{renderScriptTags()}
 
 ### Live Templating 
@@ -110,10 +111,31 @@ to the browser, so it will be instantly viewed. Just bind a Backbone event to th
  
 No you can listen to changes of templates and rerender your view!
 
-
 ### Supported compilers
 
-handlebars, coffee-script, less
+handlebars, and everything piler supports (coffee, less, stylus)
+
+### Piler API
+
+Most methods from the Piler API are delegated, though they are independent from
+the used piler backend. You can to something like this:
+
+```coffee
+   acid.addFile('style.css')
+   acid.addFile('script.js')
+   acid.addFile('script.coffee')
+
+   acid.addRaw('#box { color: pink;}', 'css')
+
+   acid.addExec ->
+    $(document).ready() -> 
+      start();
+```
+
+The required piler manager is matched by the file extension.
+You can also use `acid.liveUpdate()` directly without argument.
+
+For more detailed information, have a look at the [piler](https://github.com/epeli/piler) documention.
 
 
 ## Depenencies
