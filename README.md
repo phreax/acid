@@ -1,3 +1,4 @@
+[![build status](https://secure.travis-ci.org/phreax/acid.png)](http://travis-ci.org/phreax/acid)
 Acid
 ====
 
